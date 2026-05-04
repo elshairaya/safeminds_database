@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+env/
+
+# VS Code
+.vscode/
+
+# Database (لو استخدمت SQLite)
+*.db
+
+# Logs
+*.log
+
+# Environment variables (IMPORTANT)
+.env
