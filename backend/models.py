@@ -8,11 +8,13 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, unique=True, index=True)
-    name = Column(String, nullable=True)
+    username = Column(String, unique=True, index=True)
+    full_name = Column(String, nullable=True)
     email = Column(String, nullable=True)
+    password_hash = Column(String)
     age_range = Column(String, nullable=True)
+    gender = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-
 
 class SensorSession(Base):
     __tablename__ = "sensor_sessions"

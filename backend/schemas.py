@@ -22,3 +22,14 @@ class CSIOutput(BaseModel):
     recommendations: List[str]
     baseline_comparison: Dict[str, Any]
     model_version: str
+class UserSignup(BaseModel):
+    username: str
+    full_name: str
+    password: str
+    age_range: str
+    gender: str
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
