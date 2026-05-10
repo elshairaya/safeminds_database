@@ -33,14 +33,23 @@ class SensorReading(Base):
     __tablename__ = "sensor_readings"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(String, index=True)
+
     user_id = Column(String, index=True)
+    session_id = Column(String, index=True)
     timestamp = Column(DateTime)
-    heart_rate = Column(Integer)
-    spo2 = Column(Integer)
-    steps = Column(Integer)
-    sleep_hours = Column(Float)
-    stress_level = Column(Integer)
+
+    session_type = Column(String, nullable=True)
+    session_start = Column(DateTime, nullable=True)
+    session_end = Column(DateTime, nullable=True)
+
+    hr_mean = Column(Float, nullable=True)
+    hr_min = Column(Float, nullable=True)
+    hr_max = Column(Float, nullable=True)
+
+    movement_mean = Column(Float, nullable=True)
+    movement_variance = Column(Float, nullable=True)
+    total_epochs = Column(Integer, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

@@ -7,6 +7,13 @@ from services.validation_service import validate_sensor_data
 
 router = APIRouter()
 
+def _first_present(data, *names):
+    for name in names:
+        value = getattr(data, name, None)
+        if value is not None:
+            return value
+    return None
+
 
 @router.post("/ingest")
 def ingest_data(data: SensorData):
@@ -21,10 +28,12 @@ def ingest_data(data: SensorData):
                 "message": "Invalid input",
                 "error": error_message
             }
+        
+        session_id = _first_present(data, "session_id", "sessionId")
 
         existing_session = (
             db.query(models.SensorReading)
-            .filter(models.SensorReading.session_id == data.session_id)
+            .filter(models.SensorReading.session_id == session_id)
             .first()
         )
 
@@ -32,18 +41,25 @@ def ingest_data(data: SensorData):
             return {
                 "success": False,
                 "message": "Session already exists",
-                "error": f"session_id '{data.session_id}' was already submitted"
+                "error": f"session_id '{session_id}' was already submitted"
             }
 
         sensor_record = models.SensorReading(
             user_id=data.user_id,
-            session_id=data.session_id,
+            session_id=session_id,
             timestamp=data.timestamp,
-            heart_rate=data.heart_rate,
-            spo2=data.spo2,
-            steps=data.steps,
-            sleep_hours=data.sleep_hours,
-            stress_level=data.stress_level
+
+            session_type=_first_present(data, "session_type", "sessionType"),
+            session_start=_first_present(data, "session_start", "sessionStart"),
+            session_end=_first_present(data, "session_end", "sessionEnd"),
+
+            hr_mean=_first_present(data, "hr_mean", "hrMean"),
+            hr_min=_first_present(data, "hr_min", "hrMin"),
+            hr_max=_first_present(data, "hr_max", "hrMax"),
+
+            movement_mean=_first_present(data, "movement_mean", "movementMean"),
+            movement_variance=_first_present(data, "movement_variance", "movementVariance"),
+            total_epochs=_first_present(data, "total_epochs", "totalEpochs")
         )
 
         db.add(sensor_record)
@@ -61,7 +77,7 @@ def ingest_data(data: SensorData):
 
         csi_record = models.CSIResult(
             user_id=data.user_id,
-            session_id=data.session_id,
+            session_id=session_id,
             timestamp=data.timestamp,
             csi_score=result["csi_score"],
             risk_level=result["risk_level"],
@@ -81,6 +97,7 @@ def ingest_data(data: SensorData):
         }
 
     except Exception as e:
+        db.rollback()
         return {
             "success": False,
             "message": "Server error",
