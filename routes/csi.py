@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from backend.database import SessionLocal
-import backend.models
+import backend.models as models
 from typing import Optional
 from datetime import datetime
 router = APIRouter()
@@ -12,9 +12,9 @@ def get_latest_csi(user_id: str):
 
     try:
         latest = (
-            db.query(backend.models.CSIResult)
-            .filter(backend.models.CSIResult.user_id == user_id)
-            .order_by(backend.models.CSIResult.timestamp.desc())
+            db.query(models.CSIResult)
+            .filter(models.CSIResult.user_id == user_id)
+            .order_by(models.CSIResult.timestamp.desc())
             .first()
         )
 
@@ -26,6 +26,7 @@ def get_latest_csi(user_id: str):
 
         return {
             "success": True,
+            "message": "Latest CSI retrieved",
             "data": {
                 "user_id": latest.user_id,
                 "session_id": latest.session_id,
@@ -52,17 +53,17 @@ def get_csi_history(
     db = SessionLocal()
 
     try:
-        query = db.query(backend.models.CSIResult).filter(
-            backend.models.CSIResult.user_id == user_id
+        query = db.query(models.CSIResult).filter(
+            models.CSIResult.user_id == user_id
         )
 
         if from_date:
-            query = query.filter(backend.models.CSIResult.timestamp >= from_date)
+            query = query.filter(models.CSIResult.timestamp >= from_date)
 
         if to_date:
-            query = query.filter(backend.models.CSIResult.timestamp <= to_date)
+            query = query.filter(models.CSIResult.timestamp <= to_date)
 
-        results = query.order_by(backend.models.CSIResult.timestamp.desc()).all()
+        results = query.order_by(models.CSIResult.timestamp.desc()).all()
 
         if not results:
             return {
@@ -81,6 +82,7 @@ def get_csi_history(
 
         return {
             "success": True,
+            "message": "CSI history retrieved",
             "data": {
                 "user_id": user_id,
                 "history": history

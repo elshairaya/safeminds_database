@@ -1,59 +1,34 @@
-from pydantic import BaseModel
-from datetime import datetime
+from pydantic import BaseModel,Field, ConfigDict
 from typing import List, Optional, Dict, Any
 
 
 class SensorData(BaseModel):
-    user_id: str
+    model_config = ConfigDict(populate_by_name=True)  
+    user_id: str = Field(alias="userID")
     # For validation, support both backend snake_case and mobile camelCase 
     # ( check which one is needed after knowing the final JSON)
-    session_id: Optional[str] = None
-    sessionId: Optional[str] = None
-    timestamp: datetime
+    session_id: str = Field(alias="dataID")
+    timestamp: int = Field(alias="timeStamp")
     # check also which one is used in mobile
-    session_type: Optional[str] = None
-    sessionType: Optional[str] = None
-    
-    session_start: Optional[datetime] = None
-    sessionStart: Optional[datetime] = None
-    
-    session_end: Optional[datetime] = None
-    sessionEnd: Optional[datetime] = None
-    
-    hr_mean: Optional[float] = None
-    hrMean: Optional[float] = None
-    
-    hr_min: Optional[float] = None
-    hrMin: Optional[float] = None
-    
-    hr_max: Optional[float] = None
-    hrMax: Optional[float] = None
-    
-    movement_mean: Optional[float] = None
-    movementMean: Optional[float] = None
+    session_type: str = Field(alias="sessionType")
 
-    movement_variance: Optional[float] = None
-    movementVariance: Optional[float] = None
+    hr_mean: Optional[float] = Field(default=None, alias="hrMean")
+    hr_min: Optional[float] = Field(default=None, alias="hrMin")
+    hr_max: Optional[float] = Field(default=None, alias="hrMax")
 
-    total_epochs: Optional[int] = None
-    totalEpochs: Optional[int] = None
+    movement_mean: Optional[float] = Field(default=None, alias="movementMean")
+    movement_variance: Optional[float] = Field(default=None, alias="movementVariance")
 
+    total_epochs: Optional[int] = Field(default=None, alias="totalEpochs")
+       
     # mobile profile fields
     age: Optional[float] = None
-    gender: Optional[float] = None
+    gender: Optional[str] = None
     bmi: Optional[float] = None
-
     # mobile questionnaire fields
-    insomnia_score: Optional[float] = None
-    insomniaScore: Optional[float] = None
-
-    sleepiness_score: Optional[float] = None
-    sleepinessScore: Optional[float] = None
-
-    chronotype_score: Optional[float] = None
-    chronotypeScore: Optional[float] = None
-
-    
+    insomnia_score: Optional[float] = Field(default=None, alias="insomniaScore")
+    sleepiness_score: Optional[float] = Field(default=None, alias="sleepinessScore")
+    chronotype_score: Optional[float] = Field(default=None, alias="chronotypeScore")
 
 class CSIOutput(BaseModel):
     csi_score: int

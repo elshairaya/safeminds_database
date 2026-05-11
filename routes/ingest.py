@@ -4,6 +4,7 @@ import backend.models as models
 from backend.schemas import SensorData
 from services.processing_adapter import run_processing
 from services.validation_service import validate_sensor_data
+from datetime import datetime
 
 router = APIRouter()
 
@@ -20,6 +21,13 @@ def ingest_data(data: SensorData):
     db = SessionLocal()
 
     try:
+        # Convert milliseconds timestamp to datetime
+        timestamp = datetime.fromtimestamp(data.timestamp / 1000)
+
+        # Replace raw timestamp with converted datetime if needed
+        data.timestamp = timestamp
+
+        # Validation
         is_valid, error_message = validate_sensor_data(data)
 
         if not is_valid:
@@ -91,10 +99,20 @@ def ingest_data(data: SensorData):
         db.commit()
 
         return {
-            "success": True,
-            "message": "Data saved and processed successfully",
-            "csi": result
-        }
+     "success": True,
+     "message": "Session ingested successfully",
+     "csi": {
+        "user_id": data.user_id,
+        "session_id": data.session_id,
+        "timestamp": data.timestamp.isoformat(),
+        "csi_score": result["csi_score"],
+        "risk_level": result["risk_level"].upper(),
+        "drivers": result["drivers"],
+        "recommendations": result["recommendations"],
+        "baseline_comparison": result["baseline_comparison"],
+        "model_version": result["model_version"]
+    }
+}
 
     except Exception as e:
         db.rollback()
