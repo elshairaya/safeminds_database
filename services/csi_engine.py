@@ -78,23 +78,68 @@ def categorize_risk(score):
 def generate_drivers(feature_dict):
     drivers = []
 
-    if feature_dict.get("sleep_hours") is not None and feature_dict["sleep_hours"] < 6:
-        drivers.append("Sleep duration was shorter than recommended")
+    session_type = (
+        feature_dict.get("session_type")
+        or feature_dict.get("sessionType")
+        or ""
+    )
 
-    if feature_dict.get("sleep_hours") is not None and feature_dict["sleep_hours"] > 9:
-        drivers.append("Sleep duration was longer than usual")
+    session_type = str(session_type).upper()
 
-    if feature_dict.get("avg_hr") is not None and feature_dict["avg_hr"] > 85:
-        drivers.append("Average heart rate was higher than expected")
+    avg_hr = feature_dict.get("avg_hr")
+    sleep_hours = feature_dict.get("sleep_hours")
+    insomnia_score = feature_dict.get("insomnia_score")
+    sleepiness_score = feature_dict.get("sleepiness_score")
+    sleep_quality = feature_dict.get("sleep_quality_composite")
 
-    if feature_dict.get("insomnia_score") is not None and feature_dict["insomnia_score"] >= 10:
-        drivers.append("Insomnia questionnaire score was elevated")
+    # Hourly check logic
+    if session_type == "HOURLY_CHECK_SESSION":
+        if avg_hr is not None:
+            if avg_hr > 100:
+                drivers.append("Heart rate was elevated during this hourly check")
+            elif avg_hr < 50:
+                drivers.append("Heart rate was lower than expected during this hourly check")
+            else:
+                drivers.append("Heart rate was within the expected range during this hourly check")
 
-    if feature_dict.get("sleepiness_score") is not None and feature_dict["sleepiness_score"] >= 10:
-        drivers.append("Daytime sleepiness score was elevated")
+        if len(drivers) == 0:
+            drivers.append("No major negative driver detected during this hourly check")
 
-    if feature_dict.get("sleep_quality_composite") is not None and feature_dict["sleep_quality_composite"] < 40:
-        drivers.append("Sleep quality composite score was low")
+        return drivers
+
+    # Night session logic
+    if session_type == "NIGHT_SESSION":
+        if sleep_hours is not None and sleep_hours < 6:
+            drivers.append("Sleep duration was shorter than recommended")
+
+        if sleep_hours is not None and sleep_hours > 9:
+            drivers.append("Sleep duration was longer than usual")
+
+        if avg_hr is not None and avg_hr > 85:
+            drivers.append("Average heart rate was higher than expected during sleep")
+
+        if insomnia_score is not None and insomnia_score >= 10:
+            drivers.append("Insomnia questionnaire score was elevated")
+
+        if sleepiness_score is not None and sleepiness_score >= 10:
+            drivers.append("Daytime sleepiness score was elevated")
+
+        if sleep_quality is not None and sleep_quality < 40:
+            drivers.append("Sleep quality composite score was low")
+
+        if len(drivers) == 0:
+            drivers.append("No major negative driver detected during the night session")
+
+        return drivers
+
+    # Fallback logic if session type is missing or unknown
+    if avg_hr is not None:
+        if avg_hr > 100:
+            drivers.append("Heart rate was elevated")
+        elif avg_hr < 50:
+            drivers.append("Heart rate was lower than expected")
+        else:
+            drivers.append("Heart rate was within the expected range")
 
     if len(drivers) == 0:
         drivers.append("No major negative driver detected")
@@ -108,11 +153,21 @@ def generate_recommendations(drivers):
     for driver in drivers:
         lower_driver = driver.lower()
 
-        if "sleep duration" in lower_driver:
+        if "hourly check" in lower_driver:
+            if "elevated" in lower_driver:
+                recommendations.append("Take a short rest and continue monitoring your next readings")
+            elif "lower than expected" in lower_driver:
+                recommendations.append("Review this reading again if you feel unwell")
+            elif "within the expected range" in lower_driver:
+                recommendations.append("Continue normal monitoring")
+            else:
+                recommendations.append("Continue regular hourly monitoring")
+
+        elif "sleep duration" in lower_driver:
             recommendations.append("Try to keep a consistent sleep schedule tonight")
 
         elif "heart rate" in lower_driver:
-            recommendations.append("Monitor recovery and avoid intense activity close to bedtime")
+            recommendations.append("Monitor recovery and compare it with future readings")
 
         elif "insomnia" in lower_driver:
             recommendations.append("Track sleep difficulty trends over the next few days")
@@ -124,7 +179,7 @@ def generate_recommendations(drivers):
             recommendations.append("Review recent sleep consistency and nighttime interruptions")
 
     if len(recommendations) == 0:
-        recommendations.append("Continue monitoring sleep and wellness trends")
+        recommendations.append("Continue monitoring wellness trends")
 
     return list(dict.fromkeys(recommendations))
 

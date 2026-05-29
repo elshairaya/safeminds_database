@@ -11,7 +11,7 @@ class SensorData(BaseModel):
     timestamp: int = Field(alias="timeStamp")
 
     # check also which one is used in mobile
-   # session_type: str = Field(alias="sessionType")
+    session_type: Optional[str] = Field(default=None, alias="sessionType")
 
    #this one is added by shahed to enable testing
     session_start: Optional[str] = Field(default=None ,alias="sessionStart")

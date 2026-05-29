@@ -4,6 +4,7 @@ from services.csi_engine import get_csi_prediction
 
 
 MODEL_VERSION = "safeminds-csi-nn-v1"
+FORCE_HIGH_RISK_TEST = False
 
 
 def _safe_float(value, default=0.0):
@@ -178,6 +179,7 @@ def build_csi_features(data):
     """
 
     is_night_session = _is_night_session(data)
+    session_type = _first_present(data, "sessionType", "session_type")
 
     avg_hr = _safe_float(
         _first_present(data, "hrMean", "hr_mean", "heart_rate"),
@@ -211,6 +213,8 @@ def build_csi_features(data):
     )
 
     return {
+        
+        "session_type": session_type,
         # Mobile profile features.
         # Defaults are temporary until mobile profile is connected.
         "age": _safe_float(
@@ -368,6 +372,20 @@ def run_processing(data, user_history):
     baseline_comparison = build_baseline_comparison(data, user_history)
 
     drivers = add_baseline_drivers(prediction, baseline_comparison)
+
+    if FORCE_HIGH_RISK_TEST:
+        return {
+            "csi_score": 90,
+            "risk_level": "high",
+            "drivers": [
+                "Controlled high-risk test case generated"
+            ],
+            "recommendations": [
+                "Review the latest risk analysis in the app"
+            ],
+            "baseline_comparison": baseline_comparison,
+            "model_version": MODEL_VERSION
+        }
 
     return {
         "csi_score": prediction["csi"],
